@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wedding Planner Dashboard</title>
+<style>
+  :root{
+    --bg:#f7f4f1; --panel:#ffffff; --panel2:#faf7f5; --text:#2f2a26; --muted:#7b726b;
+    --line:#e6dfd8; --accent:#b5876d; --accent2:#d7b8a5; --success:#6e9b79; --warn:#c28b4f; --danger:#b85b5b;
+    --shadow:0 10px 30px rgba(40,28,20,.08);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    color:var(--text); background:linear-gradient(180deg,#fbf8f6 0%,#f4efeb 100%);
+    overflow:hidden;
+  }
+  .app{display:grid; grid-template-columns:280px 1fr; height:100vh; min-width:0}
+  .sidebar{
+    background:rgba(255,255,255,.84); backdrop-filter: blur(12px); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; min-height:0; min-width:0; height:100vh; overflow:hidden;
+  }
+  .brand{padding:22px 20px 14px; border-bottom:1px solid var(--line)}
+  .brand h1{margin:0;font-size:20px}
+  .brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .nav{padding:14px 10px 22px; overflow-y:auto; overflow-x:hidden; min-height:0; flex:1 1 auto}
+  .nav button{
+    width:100%; border:0; background:transparent; color:var(--text); text-align:left; padding:12px 14px; border-radius:14px; cursor:pointer; margin-bottom:6px;
+    font-size:14px;
+  }
+  .nav button:hover{background:#f4eeea}
+  .nav button.active{background:#f1e2d8; color:#5d4231; font-weight:600}
+  .sidebar-footer{
+    margin-top:auto; padding:14px 16px; border-top:1px solid var(--line); font-size:12px; color:var(--muted)
+  }
+  .main{display:flex; flex-direction:column; min-width:0; min-height:0}
+  .topbar{
+    padding:16px 18px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.75); backdrop-filter: blur(10px);
+  }
+  .topgrid{
+    display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(135px,1fr));
+  }
+  .mini{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px 14px; box-shadow:var(--shadow); min-width:0;
+  }
+  .mini .k{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:6px}
+  .mini .v{font-size:16px; font-weight:700; white-space:normal; overflow-wrap:anywhere; line-height:1.2}
+  .content{padding:18px; overflow:auto; min-width:0; min-height:0}
+  .view{display:none}
+  .view.active{display:block}
+  .grid{display:grid; gap:16px}
+  .grid.two{grid-template-columns:1.05fr .95fr}
+  .grid.three{grid-template-columns:repeat(3,1fr)}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; min-width:0;
+  }
+  .card h2,.card h3{margin:0 0 12px}
+  .sub{color:var(--muted); font-size:14px; margin-bottom:14px}
+  .muted{color:var(--muted)}
+  .pill{display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; background:#f7efe8; color:#694b37; font-size:12px}
+  .form-grid{display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .field{display:flex; flex-direction:column; gap:6px; min-width:0}
+  label{font-size:13px; color:#544941; font-weight:600}
+  input,select,textarea,button{
+    font:inherit;
+  }
+  input,select,textarea{
+    width:100%; border:1px solid #d9cfc8; border-radius:12px; padding:11px 12px; background:#fff; color:var(--text); min-width:0;
+  }
+  textarea{min-height:120px; resize:vertical}
+  button.primary,button.secondary,button.ghost,button.danger{
+    border-radius:12px; padding:11px 14px; cursor:pointer; border:1px solid transparent;
+  }
+  button.primary{background:var(--accent); color:#fff}
+  button.primary:hover{filter:brightness(.97)}
+  button.secondary{background:#f5ebe4; color:#684b38; border-color:#ecd9cd}
+  button.secondary:hover{background:#efdfd4}
+  button.ghost{background:#fff; color:#684b38; border-color:#d9cfc8}
+  button.danger{background:#fff4f4; color:#9b4242; border-color:#efc3c3}
+  .actions{display:flex; gap:10px; flex-wrap:wrap}
+  .table-wrap{overflow:auto; border:1px solid var(--line); border-radius:14px}
+  table{width:100%; border-collapse:collapse; min-width:760px; background:#fff}
+  th,td{padding:12px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+  th{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:#fcfaf9}
+  td .row-actions{display:flex; gap:6px; flex-wrap:wrap}
+  .small-btn{
+    padding:8px 10px; border-radius:10px; border:1px solid #dccfc6; background:#fff; cursor:pointer; color:#5e483a
+  }
+  .small-btn:hover{background:#faf5f2}
+  .empty{
+    border:1px dashed #dacfc8; border-radius:14px; padding:18px; color:var(--muted); background:var(--panel2)
+  }
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+  .stat{
+    background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:14px;
+  }
+  .stat .k{font-size:12px; color:var(--muted); margin-bottom:6px}
+  .stat .v{font-size:22px; font-weight:700}
+  .hero{
+    display:grid; grid-template-columns:1.2fr .8fr; gap:16px;
+  }
+  .hero .welcome{padding:24px}
+  .hero h2{font-size:28px; margin:0 0 10px}
+  .alert-list,.todo-list{display:grid; gap:10px}
+  .alert{
+    display:flex; justify-content:space-between; gap:10px; padding:11px 12px; border-radius:12px; border:1px solid var(--line); background:#fff;
+  }
+  .alert.warn{background:#fff8f1}
+  .alert.danger{background:#fff5f5}
+  .alert.success{background:#f3fbf5}
+  .chart-row{display:grid; gap:14px; grid-template-columns:repeat(3,1fr)}
+  .donut-card{display:flex; gap:14px; align-items:center}
+  .donut{--p:0; width:98px; aspect-ratio:1; border-radius:50%;
+    background:conic-gradient(var(--accent) calc(var(--p) * 1%), #eadfd8 0);
+    position:relative; flex:0 0 auto;
+  }
+  .donut:before{
+    content:""; position:absolute; inset:12px; background:#fff; border-radius:50%;
+  }
+  .donut span{position:absolute; inset:0; display:grid; place-items:center; font-weight:700; font-size:16px}
+  .hint{font-size:12px; color:var(--muted)}
+  .checkbox-cell{width:36px}
+  .status-open{color:#825b30}
+  .status-done{color:#3f7650}
+  .status-overdue{color:#a24747}
+  .popup{
+    position:fixed; inset:0; background:rgba(33,24,20,.35); display:none; align-items:center; justify-content:center; padding:20px; z-index:50;
+  }
+  .popup.show{display:flex}
+  .popup-card{
+    background:#fff; border-radius:20px; padding:24px; width:min(420px,100%); box-shadow:0 20px 60px rgba(0,0,0,.15); text-align:center;
+  }
+  .popup-card h3{margin:10px 0 6px}
+  .popup-card p{margin:0 0 18px; color:var(--muted)}
+  .toast{
+    position:fixed; right:18px; bottom:18px; background:#3f3228; color:#fff; padding:12px 14px; border-radius:14px; box-shadow:var(--shadow);
+    opacity:0; transform:translateY(10px); pointer-events:none; transition:all .22s ease; z-index:60;
+  }
+  .toast.show{opacity:1; transform:none}
+  .mobile-head{display:none; padding:12px 14px; border-bottom:1px solid var(--line); background:#fff}
+  .mobile-head button{background:#fff; border:1px solid #d9cfc8; border-radius:10px; padding:8px 10px}
+  .sidebar.open{transform:translateX(0)}
+  @media (max-width:1200px){ .topgrid{grid-template-columns:repeat(4,1fr)} }
+  @media (max-width:980px){
+    body{overflow:auto}
+    .app{grid-template-columns:1fr; height:auto; min-height:100vh}
+    .sidebar{position:fixed; inset:0 auto 0 0; width:280px; z-index:40; transform:translateX(-100%); transition:transform .2s ease}
+    .mobile-head{display:flex; align-items:center; justify-content:space-between}
+    .main{min-height:100vh}
+    .topgrid{grid-template-columns:repeat(2,1fr)}
+    .grid.two,.hero,.chart-row{grid-template-columns:1fr}
+    .form-grid,.form-grid.three,.stats,.grid.three{grid-template-columns:1fr}
+  }
+
+  @media (max-width: 1100px){
+    .topgrid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width: 760px){
+    .topgrid{grid-template-columns:1fr;}
+  }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <h1>Wedding Planner</h1>
+      <p id="sidebarCouple">Your planner will appear here</p>
+    </div>
+    <div class="nav" id="nav">
+      <button data-view="setup" class="active">Setup</button>
+      <button data-view="dashboard">Dashboard</button>
+      <button data-view="budget">Budget</button>
+      <button data-view="guests">Guests</button>
+      <button data-view="seating">Seating</button>
+      <button data-view="checklist">Checklist</button>
+      <button data-view="vendors">Vendors</button>
+      <button data-view="notes">Notes</button>
+      <button data-view="settings">Settings</button>
+    </div>
+    <div class="sidebar-footer">
+      <div id="saveStatus">Saved locally on this device</div>
+      <div style="margin-top:6px">Use the downloaded HTML file for planning. The live preview is for viewing only.</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="mobile-head">
+      <strong>Wedding Planner</strong>
+      <button id="openMenuBtn">Menu</button>
+    </div>
+    <div class="topbar">
+      <div class="topgrid">
+        <div class="mini"><div class="k">Wedding Date</div><div class="v" id="topWeddingDate">—</div></div>
+        <div class="mini"><div class="k">Countdown</div><div class="v" id="topCountdown">—</div></div>
+        <div class="mini"><div class="k">Total Budget</div><div class="v" id="topBudget">—</div></div>
+        <div class="mini"><div class="k">Remaining Budget</div><div class="v" id="topBudgetRemaining">—</div></div>
+        <div class="mini"><div class="k">Guests Target</div><div class="v" id="topGuestTarget">—</div></div>
+        <div class="mini"><div class="k">RSVP Confirmed</div><div class="v" id="topRsvpConfirmed">0</div></div>
+        <div class="mini"><div class="k">Tables Planned</div><div class="v" id="topTablesPlanned">—</div></div>
+        <div class="mini"><div class="k">Remaining Seats</div><div class="v" id="topRemainingSeats">—</div></div>
+      </div>
+    </div>
+    <div class="content">
+      <section class="view active" id="view-setup">
+        <div class="grid two">
+          <div class="card">
+            <h2>Create Your Wedding Dashboard</h2>
+            <div class="sub">Enter the core details once. Your dashboard, seating totals, and planning overview will update from this information.</div>
+            <form id="setupForm" class="form-grid">
+              <div class="field"><label>Partner 1 Name</label><input id="partnerOne" placeholder="e.g. Emma"></div>
+              <div class="field"><label>Partner 2 Name</label><input id="partnerTwo" placeholder="e.g. Liam"></div>
+              <div class="field"><label>Wedding Date</label><input id="weddingDate" type="date" required></div>
+              <div class="field"><label>Venue Name</label><input id="venueName" placeholder="Optional"></div>
+              <div class="field"><label>Total Budget</label><input id="totalBudget" type="number" min="0" step="0.01" value="0"></div>
+              <div class="field"><label>Currency</label><select id="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>AED</option><option>PKR</option><option>CAD</option><option>AUD</option></select></div>
+              <div class="field"><label>Guest Target</label><input id="guestTarget" type="number" min="0" step="1" value="0"></div>
+              <div class="field"><label>Venue Capacity</label><input id="venueCapacity" type="number" min="0" step="1" value="0"></div>
+              <div class="field"><label>Number of Tables</label><input id="tableCount" type="number" min="0" step="1" value="0"></div>
+              <div class="field"><label>Seats Per Table</label><input id="seatsPerTable" type="number" min="0" step="1" value="0"></div>
+              <div class="actions" style="grid-column:1/-1;margin-top:6px">
+                <button class="primary" type="submit">Save Setup</button>
+                <button class="secondary" type="button" id="loadSavedPlannerBtn">Load Saved Planner</button>
+                <button class="danger" type="button" id="resetPlannerBtn">Reset Planner</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>How saving works</h3>
+            <div class="sub">This planner saves locally in your browser on this device using your downloaded HTML file.</div>
+            <div class="alert-list">
+              <div class="alert"><span>First time opening</span><strong>Start in Setup</strong></div>
+              <div class="alert"><span>After saving</span><strong>Dashboard opens with your data</strong></div>
+              <div class="alert warn"><span>Use the hosted preview link</span><strong>Preview only</strong></div>
+              <div class="alert success"><span>Use the downloaded file</span><strong>Actual planner</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-dashboard">
+        <div class="hero">
+          <div class="card welcome">
+            <span class="pill">At-a-glance command center</span>
+            <h2 id="welcomeHeadline">Welcome to your planner</h2>
+            <div class="sub" id="welcomeSub">Save setup details to personalize your dashboard.</div>
+            <div class="stats">
+              <div class="stat"><div class="k">Budget Remaining</div><div class="v" id="dashBudgetRemain">—</div></div>
+              <div class="stat"><div class="k">People Confirmed</div><div class="v" id="dashPeopleConfirmed">0</div></div>
+              <div class="stat"><div class="k">Task Completion</div><div class="v" id="dashTaskCompletion">0%</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Smart alerts</h3>
+            <div class="alert-list" id="dashboardAlerts"></div>
+          </div>
+        </div>
+
+        <div class="grid" style="margin-top:16px">
+          <div class="card">
+            <h3>Visual progress</h3>
+            <div class="chart-row">
+              <div class="donut-card">
+                <div class="donut" id="budgetDonut"><span id="budgetDonutText">0%</span></div>
+                <div><div><strong>Budget Used</strong></div><div class="hint" id="budgetDonutHint">No expenses yet</div></div>
+              </div>
+              <div class="donut-card">
+                <div class="donut" id="guestDonut"><span id="guestDonutText">0%</span></div>
+                <div><div><strong>RSVP Progress</strong></div><div class="hint" id="guestDonutHint">No confirmed guests yet</div></div>
+              </div>
+              <div class="donut-card">
+                <div class="donut" id="taskDonut"><span id="taskDonutText">0%</span></div>
+                <div><div><strong>Checklist Done</strong></div><div class="hint" id="taskDonutHint">No tasks yet</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid three">
+            <div class="card"><h3>Budget overview</h3><div class="sub" id="budgetOverviewText">Add expenses to see a live budget summary.</div></div>
+            <div class="card"><h3>Guest overview</h3><div class="sub" id="guestOverviewText">Add guests and update RSVP to see live attendance numbers.</div></div>
+            <div class="card"><h3>Seating overview</h3><div class="sub" id="seatingOverviewText">Set up tables and assign confirmed guests to see seat usage.</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-budget">
+        <div class="grid two">
+          <div class="card">
+            <h2>Budget</h2>
+            <div class="sub">Track expenses without spreadsheet clutter. Expenses save automatically after you click Add Expense.</div>
+            <form id="expenseForm" class="form-grid">
+              <div class="field"><label>Expense Title</label><input id="expenseTitle" required placeholder="e.g. Venue Deposit"></div>
+              <div class="field"><label>Category</label><select id="expenseCategory"><option>Venue</option><option>Catering</option><option>Decor</option><option>Flowers</option><option>Photography</option><option>Attire</option><option>Entertainment</option><option>Transport</option><option>Stationery</option><option>Misc</option></select></div>
+              <div class="field"><label>Amount</label><input id="expenseAmount" type="number" min="0" step="0.01" value="0" required></div>
+              <div class="field"><label>Status</label><select id="expensePaid"><option>Paid</option><option>Unpaid</option></select></div>
+              <div class="actions" style="grid-column:1/-1"><button class="primary" type="submit">Add Expense</button></div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>Budget summary</h3>
+            <div class="stats">
+              <div class="stat"><div class="k">Total Budget</div><div class="v" id="budgetTotalDisplay">—</div></div>
+              <div class="stat"><div class="k">Spent</div><div class="v" id="budgetSpentDisplay">—</div></div>
+              <div class="stat"><div class="k">Remaining</div><div class="v" id="budgetRemainDisplay">—</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Expenses</h3>
+          <div id="expensesWrap" class="empty">No expenses added yet.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-guests">
+        <div class="grid two">
+          <div class="card">
+            <h2>Guests</h2>
+            <div class="sub">Add guests, save changes explicitly, and compose one-to-one or selected group emails using your email app.</div>
+            <form id="guestForm" class="form-grid three">
+              <div class="field"><label>Name</label><input id="guestName" required></div>
+              <div class="field"><label>Email</label><input id="guestEmail" type="email" placeholder="Optional"></div>
+              <div class="field"><label>Side</label><select id="guestSide"><option>Bride</option><option>Groom</option><option>Both</option></select></div>
+              <div class="field"><label>RSVP</label><select id="guestStatus"><option>Pending</option><option>Confirmed</option><option>Declined</option></select></div>
+              <div class="field"><label>Plus One</label><select id="guestPlusOne"><option value="0">No</option><option value="1">Yes</option></select></div>
+              <div class="field"><label>Meal Choice</label><input id="guestMeal" placeholder="Optional"></div>
+              <div class="actions" style="grid-column:1/-1">
+                <button class="primary" type="submit">Add Guest</button>
+                <button class="secondary" type="button" id="selectAllGuestsBtn">Select All With Email</button>
+                <button class="secondary" type="button" id="clearSelectedGuestsBtn">Clear Selection</button>
+                <button class="ghost" type="button" id="composeGroupEmailBtn">Compose Group Email</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>Guest summary</h3>
+            <div class="stats">
+              <div class="stat"><div class="k">Guest Records</div><div class="v" id="guestsInvitedDisplay">0</div></div>
+              <div class="stat"><div class="k">People Confirmed</div><div class="v" id="guestsConfirmedDisplay">0</div></div>
+              <div class="stat"><div class="k">Pending RSVP</div><div class="v" id="guestsPendingDisplay">0</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Guest list</h3>
+          <div id="guestTableWrap" class="empty">No guests added yet.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-seating">
+        <div class="grid two">
+          <div class="card">
+            <h2>Seating</h2>
+            <div class="sub">Choose confirmed guests from a dropdown and assign them to prebuilt tables. Plus-one guests automatically use 2 seats.</div>
+            <form id="seatingForm" class="form-grid three">
+              <div class="field"><label>Guest</label><select id="seatingGuest" required></select></div>
+              <div class="field"><label>Table</label><select id="seatingTable" required></select></div>
+              <div class="field"><label>Seats Used</label><input id="seatingSeats" type="number" min="1" step="1" value="1" readonly></div>
+              <div class="actions" style="grid-column:1/-1"><button class="primary" type="submit">Save Assignment</button></div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>Seating summary</h3>
+            <div class="stats">
+              <div class="stat"><div class="k">Tables Planned</div><div class="v" id="tablesPlannedDisplay">0</div></div>
+              <div class="stat"><div class="k">Total Seats</div><div class="v" id="seatsTotalDisplay">0</div></div>
+              <div class="stat"><div class="k">Seats Assigned</div><div class="v" id="seatsAssignedDisplay">0</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Assignments</h3>
+          <div id="seatingWrap" class="empty">No table assignments yet.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-checklist">
+        <div class="grid two">
+          <div class="card">
+            <h2>Checklist</h2>
+            <div class="sub">This is your wedding to-do list. Add custom tasks or generate a starter checklist based on the wedding date in Setup.</div>
+            <form id="taskForm" class="form-grid">
+              <div class="field"><label>Task Name</label><input id="taskName" required placeholder="e.g. Confirm venue"></div>
+              <div class="field"><label>Category</label><select id="taskCategory"><option>Venue</option><option>Guests</option><option>Vendors</option><option>Decor</option><option>Attire</option><option>Food</option><option>Admin</option><option>Other</option></select></div>
+              <div class="field"><label>Priority</label><select id="taskPriority"><option>Low</option><option>Medium</option><option>High</option></select></div>
+              <div class="field"><label>Due Date</label><input id="taskDueDate" type="date"></div>
+              <div class="actions" style="grid-column:1/-1">
+                <button class="primary" type="submit">Add Task</button>
+                <button class="secondary" type="button" id="generateChecklistBtn">Generate Starter Checklist</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>Checklist summary</h3>
+            <div class="stats">
+              <div class="stat"><div class="k">Total Tasks</div><div class="v" id="taskTotalDisplay">0</div></div>
+              <div class="stat"><div class="k">Done</div><div class="v" id="taskDoneDisplay">0</div></div>
+              <div class="stat"><div class="k">Overdue</div><div class="v" id="taskOverdueDisplay">0</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Tasks</h3>
+          <div id="taskTableWrap" class="empty">No tasks added yet.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-vendors">
+        <div class="grid two">
+          <div class="card">
+            <h2>Vendors</h2>
+            <div class="sub">Store supplier details and payment reminders in one place.</div>
+            <form id="vendorForm" class="form-grid">
+              <div class="field"><label>Vendor Name</label><input id="vendorName" required></div>
+              <div class="field"><label>Category</label><select id="vendorCategory"><option>Venue</option><option>Caterer</option><option>Photographer</option><option>Florist</option><option>Hair & Makeup</option><option>DJ / Band</option><option>Cake</option><option>Transport</option><option>Decor</option><option>Other</option></select></div>
+              <div class="field"><label>Deposit</label><input id="vendorDeposit" type="number" min="0" step="0.01" value="0"></div>
+              <div class="field"><label>Balance</label><input id="vendorBalance" type="number" min="0" step="0.01" value="0"></div>
+              <div class="field"><label>Status</label><select id="vendorStatus"><option>Booked</option><option>Researching</option><option>Paid</option></select></div>
+              <div class="field"><label>Due Date</label><input id="vendorDueDate" type="date"></div>
+              <div class="actions" style="grid-column:1/-1"><button class="primary" type="submit">Add Vendor</button></div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>Vendor summary</h3>
+            <div class="stats">
+              <div class="stat"><div class="k">Total Vendors</div><div class="v" id="vendorTotalDisplay">0</div></div>
+              <div class="stat"><div class="k">Booked</div><div class="v" id="vendorBookedDisplay">0</div></div>
+              <div class="stat"><div class="k">Due Soon</div><div class="v" id="vendorDueDisplay">0</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Vendor list</h3>
+          <div id="vendorTableWrap" class="empty">No vendors added yet.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-notes">
+        <div class="card">
+          <h2>Notes</h2>
+          <div class="sub">Use this space for ideas, reminders, and anything that does not fit elsewhere.</div>
+          <div class="field">
+            <label>Planner Notes</label>
+            <textarea id="notesField" placeholder="Write your notes here..."></textarea>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="primary" id="saveNotesBtn" type="button">Save Notes</button>
+            
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="grid two">
+          <div class="card">
+            <h2>Settings</h2>
+            <div class="sub">Manual actions for reassurance and data control.</div>
+            <div class="actions">
+              <button class="secondary" type="button" id="quickSaveBtn">Save Planner Now</button>
+              <button class="secondary" type="button" id="goDashboardBtn">Go to Dashboard</button>
+              <button class="secondary" type="button" id="exportExcelBtn">Download Complete Data (Excel)</button>
+              <button class="danger" type="button" id="resetPlannerBtn2">Reset Planner</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>About storage</h3>
+            <div class="sub">Your planner data saves locally in this browser on this device. It does not sync between devices and should be used from the downloaded HTML file.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="popup" id="savePopup">
+  <div class="popup-card">
+    <div style="font-size:40px">✓</div>
+    <h3>Saved</h3>
+    <p id="savePopupMessage">Your changes were saved locally on this device.</p>
+    <button class="primary" id="closeSavePopupBtn" type="button">Continue</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'weddingPlanner_v14';
+
+const defaultData = {
+  setup: {partnerOne:'', partnerTwo:'', weddingDate:'', venueName:'', totalBudget:0, currency:'USD', guestTarget:0, venueCapacity:0, tableCount:0, seatsPerTable:0},
+  budget: { expenses: [] },
+  guests: [],
+  seating: [],
+  checklist: [],
+  vendors: [],
+  notes: ''
+};
+
+let plannerData = JSON.parse(JSON.stringify(defaultData));
+
+const navButtons = Array.from(document.querySelectorAll('#nav button[data-view]'));
+const views = Array.from(document.querySelectorAll('.view'));
+
+function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+function normalizeData(raw){
+  const out = deepClone(defaultData);
+  if (!raw || typeof raw !== 'object') return out;
+  out.setup = {...out.setup, ...(raw.setup || {})};
+  out.budget = {expenses: Array.isArray(raw?.budget?.expenses) ? raw.budget.expenses : []};
+  out.guests = Array.isArray(raw.guests) ? raw.guests : [];
+  out.seating = Array.isArray(raw.seating) ? raw.seating : [];
+  out.checklist = Array.isArray(raw.checklist) ? raw.checklist : [];
+  out.vendors = Array.isArray(raw.vendors) ? raw.vendors : [];
+  out.notes = typeof raw.notes === 'string' ? raw.notes : '';
+  return out;
+}
+function loadData(){
+  try{
+    const saved = localStorage.getItem(STORAGE_KEY);
+    plannerData = saved ? normalizeData(JSON.parse(saved)) : deepClone(defaultData);
+  }catch(e){
+    plannerData = deepClone(defaultData);
+  }
+}
+function saveData(message='Saved locally on this device', popup=false){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(plannerData));
+  document.getElementById('saveStatus').textContent = message;
+  showToast(message);
+  if(popup) openSavePopup(message);
+}
+function resetPlanner(){
+  localStorage.removeItem(STORAGE_KEY);
+  plannerData = deepClone(defaultData);
+  renderAll();
+  showView('setup');
+  document.getElementById('saveStatus').textContent = 'Planner reset';
+}
+function showToast(message){
+  const t = document.getElementById('toast');
+  t.textContent = message;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=>t.classList.remove('show'), 1600);
+}
+function openSavePopup(message){
+  document.getElementById('savePopupMessage').textContent = message;
+  document.getElementById('savePopup').classList.add('show');
+}
+function closeSavePopup(){
+  document.getElementById('savePopup').classList.remove('show');
+}
+function showView(name){
+  views.forEach(v => v.classList.toggle('active', v.id === 'view-'+name));
+  navButtons.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function escapeAttr(str=''){
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+function escapeHtml(str=''){
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+function xmlEscape(str=''){
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function downloadPlannerExcel(){
+  const rows = [];
+  const pushRow = cells => rows.push('<Row>' + cells.map(c => `<Cell><Data ss:Type="String">${xmlEscape(c)}</Data></Cell>`).join('') + '</Row>');
+  const s = plannerData.setup;
+  const budget = getBudgetStats();
+  const guests = getGuestStats();
+  const seating = getSeatingStats();
+  const tasks = getChecklistStats();
+  const vendors = getVendorStats();
+
+  pushRow(['Wedding Planner Export']);
+  pushRow(['Exported At', new Date().toLocaleString()]);
+  pushRow([]);
+
+  pushRow(['Setup']);
+  pushRow(['Partner One', s.partnerOne || '']);
+  pushRow(['Partner Two', s.partnerTwo || '']);
+  pushRow(['Wedding Date', s.weddingDate || '']);
+  pushRow(['Venue Name', s.venueName || '']);
+  pushRow(['Currency', s.currency || '']);
+  pushRow(['Total Budget', String(s.totalBudget || 0)]);
+  pushRow(['Remaining Budget', String(budget.remaining)]);
+  pushRow(['Guest Target', String(s.guestTarget || 0)]);
+  pushRow(['Venue Capacity', String(s.venueCapacity || 0)]);
+  pushRow(['Table Count', String(s.tableCount || 0)]);
+  pushRow(['Seats Per Table', String(s.seatsPerTable || 0)]);
+  pushRow(['Remaining Seats', String(seating.remaining)]);
+  pushRow([]);
+
+  pushRow(['Budget']);
+  pushRow(['Title','Category','Amount','Paid']);
+  (plannerData.budget.expenses.length ? plannerData.budget.expenses : [{}]).forEach(x => pushRow([x.title || '', x.category || '', String(x.amount || ''), x.paid || '']));
+  pushRow([]);
+
+  pushRow(['Guests']);
+  pushRow(['Name','Email','Side','RSVP','Plus One','Meal','Selected For Group Email']);
+  (plannerData.guests.length ? plannerData.guests : [{}]).forEach(g => pushRow([g.name || '', g.email || '', g.side || '', g.status || '', String(g.plusOne || 0), g.meal || '', g.selectedForGroupEmail ? 'Yes' : 'No']));
+  pushRow([]);
+
+  pushRow(['Seating']);
+  pushRow(['Guest','Table','Seats Used']);
+  (plannerData.seating.length ? plannerData.seating : [{}]).forEach(a => pushRow([a.guest || '', a.table || '', String(a.seatsUsed || '')]));
+  pushRow([]);
+
+  pushRow(['Checklist']);
+  pushRow(['Task','Category','Priority','Due Date','Status']);
+  (plannerData.checklist.length ? plannerData.checklist : [{}]).forEach(t => pushRow([t.name || '', t.category || '', t.priority || '', t.dueDate || '', t.status || '']));
+  pushRow([]);
+
+  pushRow(['Vendors']);
+  pushRow(['Name','Category','Deposit','Balance','Status','Due Date']);
+  (plannerData.vendors.length ? plannerData.vendors : [{}]).forEach(v => pushRow([v.name || '', v.category || '', String(v.deposit || ''), String(v.balance || ''), v.status || '', v.dueDate || '']));
+  pushRow([]);
+
+  pushRow(['Notes']);
+  pushRow([plannerData.notes || '']);
+  pushRow([]);
+
+  pushRow(['Summary']);
+  pushRow(['People Confirmed', String(guests.confirmedAttendees)]);
+  pushRow(['Confirmed Invites', String(guests.confirmedInvites)]);
+  pushRow(['Pending Invites', String(guests.pending)]);
+  pushRow(['Checklist Done', String(tasks.done)]);
+  pushRow(['Checklist Overdue', String(tasks.overdue)]);
+  pushRow(['Total Vendors', String(vendors.total)]);
+  pushRow(['Booked Vendors', String(vendors.booked)]);
+
+  const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
+<Worksheet ss:Name="Planner Data">
+<Table>${rows.join('')} </Table>
+</Worksheet>
+</Workbook>`;
+
+  const blob = new Blob([xml], {type:'application/vnd.ms-excel'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'wedding_planner_data.xls';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Excel export downloaded');
+}
+function currencyFormat(value){
+  const c = plannerData.setup.currency || 'USD';
+  return `${c} ${Number(value||0).toLocaleString(undefined,{maximumFractionDigits:2})}`;
+}
+function getDaysLeft(dateStr){
+  if(!dateStr) return '—';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(dateStr+'T00:00:00');
+  return Math.ceil((target - today)/(1000*60*60*24));
+}
+function getBudgetStats(){
+  const totalBudget = Number(plannerData.setup.totalBudget || 0);
+  const spent = plannerData.budget.expenses.reduce((s,x)=>s + Number(x.amount||0), 0);
+  const remaining = totalBudget - spent;
+  const percent = totalBudget > 0 ? Math.max(0, Math.min(100, Math.round((spent / totalBudget) * 100))) : 0;
+  return {totalBudget, spent, remaining, percent};
+}
+function getGuestStats(){
+  const invited = plannerData.guests.length;
+  const confirmed = plannerData.guests.filter(g => g.status === 'Confirmed');
+  const confirmedInvites = confirmed.length;
+  const confirmedAttendees = confirmed.reduce((s,g)=> s + 1 + Number(g.plusOne || 0), 0);
+  const pending = plannerData.guests.filter(g => g.status === 'Pending').length;
+  const progress = invited ? Math.round((confirmedInvites / invited) * 100) : 0;
+  return {invited, confirmedInvites, confirmedAttendees, pending, progress};
+}
+function getChecklistStats(){
+  const total = plannerData.checklist.length;
+  const done = plannerData.checklist.filter(t => t.status === 'Done').length;
+  const overdue = plannerData.checklist.filter(t => t.status !== 'Done' && t.dueDate && new Date(t.dueDate+'T00:00:00') < new Date(new Date().toDateString())).length;
+  const percent = total ? Math.round((done / total) * 100) : 0;
+  return {total, done, overdue, percent};
+}
+function getSeatingStats(){
+  const totalSeats = Number(plannerData.setup.tableCount || 0) * Number(plannerData.setup.seatsPerTable || 0);
+  const assigned = plannerData.seating.reduce((s,a)=>s + Number(a.seatsUsed || 0), 0);
+  return {totalSeats, assigned, remaining: Math.max(0, totalSeats-assigned)};
+}
+function getVendorStats(){
+  const total = plannerData.vendors.length;
+  const booked = plannerData.vendors.filter(v => v.status === 'Booked' || v.status === 'Paid').length;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const soon = new Date(today); soon.setDate(soon.getDate()+14);
+  const due = plannerData.vendors.filter(v => v.dueDate && new Date(v.dueDate+'T00:00:00') >= today && new Date(v.dueDate+'T00:00:00') <= soon).length;
+  return {total, booked, due};
+}
+function getOpenTasksSorted(){
+  return plannerData.checklist
+    .filter(t => t.status !== 'Done')
+    .sort((a,b) => (a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
+}
+function updateTopInfo(){
+  const s = plannerData.setup;
+  const budget = getBudgetStats();
+  const guests = getGuestStats();
+  const seating = getSeatingStats();
+  document.getElementById('sidebarCouple').textContent = (s.partnerOne || s.partnerTwo) ? `${s.partnerOne || 'Partner 1'} & ${s.partnerTwo || 'Partner 2'}` : 'Your planner will appear here';
+  document.getElementById('topWeddingDate').textContent = s.weddingDate || '—';
+  document.getElementById('topCountdown').textContent = s.weddingDate ? `${getDaysLeft(s.weddingDate)} days` : '—';
+  document.getElementById('topBudget').textContent = s.totalBudget ? currencyFormat(s.totalBudget) : '—';
+  document.getElementById('topBudgetRemaining').textContent = s.totalBudget ? currencyFormat(budget.remaining) : '—';
+  document.getElementById('topGuestTarget').textContent = s.guestTarget || '—';
+  document.getElementById('topRsvpConfirmed').textContent = guests.confirmedAttendees || 0;
+  document.getElementById('topTablesPlanned').textContent = s.tableCount || '—';
+  document.getElementById('topRemainingSeats').textContent = s.tableCount ? seating.remaining : '—';
+}
+function renderSetupForm(){
+  const s = plannerData.setup;
+  ['partnerOne','partnerTwo','weddingDate','venueName','totalBudget','currency','guestTarget','venueCapacity','tableCount','seatsPerTable'].forEach(id=>{
+    const el = document.getElementById(id); if(!el) return;
+    el.value = s[id] ?? '';
+  });
+}
+function setDonut(id, percent, text, hint){
+  const el = document.getElementById(id);
+  el.style.setProperty('--p', percent);
+  document.getElementById(id+'Text').textContent = text;
+  document.getElementById(id+'Hint').textContent = hint;
+}
+function renderDashboard(){
+  const s = plannerData.setup;
+  const budget = getBudgetStats();
+  const guests = getGuestStats();
+  const tasks = getChecklistStats();
+  const seating = getSeatingStats();
+  const name = (s.partnerOne || s.partnerTwo) ? `${s.partnerOne || ''}${(s.partnerOne&&s.partnerTwo)?' & ':''}${s.partnerTwo || ''}` : 'your wedding';
+  document.getElementById('welcomeHeadline').textContent = `Planning ${name}`;
+  document.getElementById('welcomeSub').textContent = s.weddingDate ? `Wedding date: ${s.weddingDate} • ${getDaysLeft(s.weddingDate)} days to go` : 'Save your setup details to personalize your dashboard.';
+  document.getElementById('dashBudgetRemain').textContent = s.totalBudget ? currencyFormat(budget.remaining) : '—';
+  document.getElementById('dashPeopleConfirmed').textContent = guests.confirmedAttendees;
+  document.getElementById('dashTaskCompletion').textContent = `${tasks.percent}%`;
+
+  const alerts = [];
+  if (budget.remaining < 0) alerts.push({t:'You are over budget', v: currencyFormat(Math.abs(budget.remaining)), c:'danger'});
+  else if (s.totalBudget) alerts.push({t:'Budget remaining', v: currencyFormat(budget.remaining), c:'success'});
+  if (guests.pending) alerts.push({t:'Pending RSVP', v: `${guests.pending} invite${guests.pending===1?'':'s'}`, c:'warn'});
+  if (tasks.overdue) alerts.push({t:'Overdue tasks', v: `${tasks.overdue}`, c:'danger'});
+  const openTasks = getOpenTasksSorted();
+  if (openTasks[0]) alerts.push({t:'Next task due', v: `${openTasks[0].name}${openTasks[0].dueDate ? ' • '+openTasks[0].dueDate : ''}`, c:'warn'});
+  if (s.tableCount) alerts.push({t:'Remaining seats', v: `${seating.remaining}`, c:'success'});
+  const alertBox = document.getElementById('dashboardAlerts');
+  alertBox.innerHTML = alerts.length ? alerts.map(a=>`<div class="alert ${a.c||''}"><span>${escapeHtml(a.t)}</span><strong>${escapeHtml(String(a.v))}</strong></div>`).join('') : '<div class="empty">No alerts yet. Add setup details and planner data to see live reminders.</div>';
+
+  setDonut('budgetDonut', budget.percent, `${budget.percent}%`, s.totalBudget ? `${currencyFormat(budget.spent)} spent of ${currencyFormat(s.totalBudget)}` : 'Set a total budget in Setup');
+  setDonut('guestDonut', guests.progress, `${guests.progress}%`, guests.invited ? `${guests.confirmedInvites} confirmed invite${guests.confirmedInvites===1?'':'s'} • ${guests.confirmedAttendees} people` : 'Add guests to track RSVP progress');
+  setDonut('taskDonut', tasks.percent, `${tasks.percent}%`, tasks.total ? `${tasks.done} of ${tasks.total} tasks done` : 'Add tasks to see progress');
+
+  document.getElementById('budgetOverviewText').textContent = s.totalBudget ? `${currencyFormat(budget.spent)} spent and ${currencyFormat(budget.remaining)} remaining.` : 'Set a total budget in Setup and then add expenses.';
+  document.getElementById('guestOverviewText').textContent = guests.invited ? `${guests.invited} guest record${guests.invited===1?'':'s'}, ${guests.confirmedAttendees} people confirmed from ${guests.confirmedInvites} confirmed invite${guests.confirmedInvites===1?'':'s'}.` : 'Add guests and update RSVP status.';
+  document.getElementById('seatingOverviewText').textContent = s.tableCount ? `${seating.assigned} seat${seating.assigned===1?'':'s'} assigned across ${s.tableCount} table${Number(s.tableCount)===1?'':'s'}.` : 'Enter table count and seats per table in Setup.';
+}
+function renderBudget(){
+  const st = getBudgetStats();
+  document.getElementById('budgetTotalDisplay').textContent = plannerData.setup.totalBudget ? currencyFormat(st.totalBudget) : '—';
+  document.getElementById('budgetSpentDisplay').textContent = currencyFormat(st.spent);
+  document.getElementById('budgetRemainDisplay').textContent = plannerData.setup.totalBudget ? currencyFormat(st.remaining) : '—';
+  const wrap = document.getElementById('expensesWrap');
+  if(!plannerData.budget.expenses.length){
+    wrap.className = 'empty'; wrap.innerHTML = 'No expenses added yet.'; return;
+  }
+  wrap.className = 'table-wrap';
+  wrap.innerHTML = `<table><thead><tr><th>Expense</th><th>Category</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>
+  ${plannerData.budget.expenses.map((x,i)=>`<tr>
+    <td>${escapeHtml(x.title)}</td>
+    <td>${escapeHtml(x.category)}</td>
+    <td>${currencyFormat(x.amount)}</td>
+    <td>${escapeHtml(x.paid)}</td>
+    <td><button class="small-btn" onclick="removeExpense(${i})">Delete</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+function renderGuests(){
+  const st = getGuestStats();
+  document.getElementById('guestsInvitedDisplay').textContent = st.invited;
+  document.getElementById('guestsConfirmedDisplay').textContent = st.confirmedAttendees;
+  document.getElementById('guestsPendingDisplay').textContent = st.pending;
+  const wrap = document.getElementById('guestTableWrap');
+  if(!plannerData.guests.length){
+    wrap.className = 'empty'; wrap.innerHTML = 'No guests added yet. Start by adding a name, and later update RSVP, email, plus-one, and meal from the list below.'; return;
+  }
+  wrap.className = 'table-wrap';
+  wrap.innerHTML = `<table><thead><tr><th class="checkbox-cell">Select</th><th>Name</th><th>Email</th><th>Side</th><th>RSVP</th><th>Plus One</th><th>Meal</th><th>Actions</th></tr></thead><tbody>
+    ${plannerData.guests.map((g,i)=>`<tr>
+      <td class="checkbox-cell"><input type="checkbox" ${g.selectedForGroupEmail?'checked':''} onchange="toggleGuestSelection(${i}, this.checked)"></td>
+      <td><input id="guestNameRow${i}" value="${escapeHtml(g.name)}"></td>
+      <td><input id="guestEmailRow${i}" type="email" value="${escapeHtml(g.email||'')}"></td>
+      <td><select id="guestSideRow${i}">${['Bride','Groom','Both'].map(x=>`<option ${g.side===x?'selected':''}>${x}</option>`).join('')}</select></td>
+      <td><select id="guestStatusRow${i}">${['Pending','Confirmed','Declined'].map(x=>`<option ${g.status===x?'selected':''}>${x}</option>`).join('')}</select></td>
+      <td><select id="guestPlusOneRow${i}"><option value="0" ${Number(g.plusOne||0)===0?'selected':''}>No</option><option value="1" ${Number(g.plusOne||0)===1?'selected':''}>Yes</option></select></td>
+      <td><input id="guestMealRow${i}" value="${escapeHtml(g.meal||'')}"></td>
+      <td><div class="row-actions"><button class="small-btn" onclick="saveGuestRow(${i})">Save</button><button class="small-btn" onclick="composeGuestEmail(${i})">Email</button><button class="small-btn" onclick="removeGuest(${i})">Delete</button></div></td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+function getTableNames(){
+  const count = Number(plannerData.setup.tableCount || 0);
+  return Array.from({length: count}, (_,i)=>`Table ${i+1}`);
+}
+function populateSeatingOptions(){
+  const guestSelect = document.getElementById('seatingGuest');
+  const tableSelect = document.getElementById('seatingTable');
+  const confirmedGuests = plannerData.guests.map((g,idx)=>({...g, _index: idx})).filter(g => g.status === 'Confirmed');
+  guestSelect.innerHTML = confirmedGuests.length ? confirmedGuests.map(g => `<option value="${g._index}">${escapeHtml(g.name)}${Number(g.plusOne||0) ? ' (+1)' : ''}</option>`).join('') : '<option value="">No confirmed guests yet</option>';
+  const tables = getTableNames();
+  tableSelect.innerHTML = tables.length ? tables.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('') : '<option value="">Add tables in Setup first</option>';
+  syncSeatingSeatCount();
+}
+function syncSeatingSeatCount(){
+  const guestIndex = Number(document.getElementById('seatingGuest').value);
+  const guest = plannerData.guests[guestIndex];
+  document.getElementById('seatingSeats').value = guest ? (1 + Number(guest.plusOne || 0)) : 1;
+}
+function renderSeating(){
+  const st = getSeatingStats();
+  document.getElementById('tablesPlannedDisplay').textContent = plannerData.setup.tableCount || 0;
+  document.getElementById('seatsTotalDisplay').textContent = st.totalSeats;
+  document.getElementById('seatsAssignedDisplay').textContent = st.assigned;
+  const wrap = document.getElementById('seatingWrap');
+  if(!plannerData.seating.length){
+    wrap.className = 'empty'; wrap.innerHTML = 'No table assignments yet.'; return;
+  }
+  wrap.className = 'table-wrap';
+  wrap.innerHTML = `<table><thead><tr><th>Guest</th><th>Table</th><th>Seats Used</th><th></th></tr></thead><tbody>
+  ${plannerData.seating.map((x,i)=>`<tr><td>${escapeHtml(x.guest)}</td><td>${escapeHtml(x.table)}</td><td>${x.seatsUsed}</td><td><button class="small-btn" onclick="removeSeating(${i})">Delete</button></td></tr>`).join('')}
+  </tbody></table>`;
+}
+function renderChecklist(){
+  const st = getChecklistStats();
+  document.getElementById('taskTotalDisplay').textContent = st.total;
+  document.getElementById('taskDoneDisplay').textContent = st.done;
+  document.getElementById('taskOverdueDisplay').textContent = st.overdue;
+  const wrap = document.getElementById('taskTableWrap');
+  if(!plannerData.checklist.length){
+    wrap.className = 'empty'; wrap.innerHTML = 'No tasks added yet. Use Add Task for custom items, or click Generate Starter Checklist to create a ready-made wedding to-do list.'; return;
+  }
+  wrap.className = 'table-wrap';
+  wrap.innerHTML = `<table><thead><tr><th>Task</th><th>Category</th><th>Priority</th><th>Due Date</th><th>Status</th><th></th><th></th><th></th></tr></thead><tbody>
+  ${plannerData.checklist.map((t,i)=>{
+    const overdue = t.status !== 'Done' && t.dueDate && new Date(t.dueDate+'T00:00:00') < new Date(new Date().toDateString());
+    return `<tr>
+      <td><input id="taskNameRow${i}" value="${escapeAttr(t.name)}" /></td>
+      <td>
+        <select id="taskCategoryRow${i}">
+          ${['Venue','Guests','Food','Vendors','Decor','Attire','Admin'].map(opt=>`<option value="${opt}" ${t.category===opt?'selected':''}>${opt}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select id="taskPriorityRow${i}">
+          ${['Low','Medium','High'].map(opt=>`<option value="${opt}" ${t.priority===opt?'selected':''}>${opt}</option>`).join('')}
+        </select>
+      </td>
+      <td><input id="taskDueDateRow${i}" type="date" value="${t.dueDate || ''}" /></td>
+      <td>
+        <select id="taskStatusRow${i}" class="${overdue ? 'status-overdue' : (t.status === 'Done' ? 'status-done' : 'status-open')}">
+          ${['Open','Done'].map(opt=>`<option value="${opt}" ${t.status===opt?'selected':''}>${opt}</option>`).join('')}
+        </select>
+      </td>
+      <td><button class="small-btn" onclick="saveTaskRow(${i})">Save</button></td>
+      <td><button class="small-btn" onclick="toggleTaskStatus(${i})">${t.status === 'Done' ? 'Undo' : 'Mark Done'}</button></td>
+      <td><button class="small-btn" onclick="removeTask(${i})">Delete</button></td>
+    </tr>`
+  }).join('')}</tbody></table>`;
+}
+function renderVendors(){
+  const st = getVendorStats();
+  document.getElementById('vendorTotalDisplay').textContent = st.total;
+  document.getElementById('vendorBookedDisplay').textContent = st.booked;
+  document.getElementById('vendorDueDisplay').textContent = st.due;
+  const wrap = document.getElementById('vendorTableWrap');
+  if(!plannerData.vendors.length){
+    wrap.className = 'empty'; wrap.innerHTML = 'No vendors added yet.'; return;
+  }
+  wrap.className = 'table-wrap';
+  wrap.innerHTML = `<table><thead><tr><th>Name</th><th>Category</th><th>Status</th><th>Deposit</th><th>Balance</th><th>Due Date</th><th></th></tr></thead><tbody>
+  ${plannerData.vendors.map((v,i)=>`<tr>
+    <td>${escapeHtml(v.name)}</td>
+    <td>${escapeHtml(v.category)}</td>
+    <td>${escapeHtml(v.status)}</td>
+    <td>${currencyFormat(v.deposit)}</td>
+    <td>${currencyFormat(v.balance)}</td>
+    <td>${v.dueDate || '—'}</td>
+    <td><button class="small-btn" onclick="removeVendor(${i})">Delete</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+function renderNotes(){
+  document.getElementById('notesField').value = plannerData.notes || '';
+}
+function renderAll(){
+  updateTopInfo();
+  renderSetupForm();
+  populateSeatingOptions();
+  renderDashboard();
+  renderBudget();
+  renderGuests();
+  renderSeating();
+  renderChecklist();
+  renderVendors();
+  renderNotes();
+}
+
+function generateStarterChecklist(){
+  if(!plannerData.setup.weddingDate){
+    alert('Save your wedding date in Setup first.');
+    return;
+  }
+  const target = new Date(plannerData.setup.weddingDate + 'T00:00:00');
+  const addDays = n => { const d = new Date(target); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+  const starter = [
+    ['Book venue','Venue','High', addDays(-180)],
+    ['Finalize guest list','Guests','High', addDays(-120)],
+    ['Send invitations','Guests','High', addDays(-90)],
+    ['Confirm caterer','Food','Medium', addDays(-60)],
+    ['Book photographer','Vendors','Medium', addDays(-75)],
+    ['Arrange decor','Decor','Medium', addDays(-45)],
+    ['Final attire fitting','Attire','Medium', addDays(-20)],
+    ['Confirm all vendors','Vendors','High', addDays(-10)],
+    ['Prepare seating plan','Guests','High', addDays(-7)],
+    ['Final payment review','Admin','High', addDays(-5)]
+  ];
+  const existingNames = new Set(plannerData.checklist.map(t => t.name.toLowerCase()));
+  let added = 0;
+  starter.forEach(([name, category, priority, dueDate]) => {
+    if (!existingNames.has(name.toLowerCase())) {
+      plannerData.checklist.push({name, category, priority, dueDate, status:'Open'});
+      added++;
+    }
+  });
+  saveData(added ? 'Starter checklist generated' : 'Starter checklist already exists', true);
+  renderAll();
+  showView('checklist');
+}
+function saveGuestRow(index){
+  const g = plannerData.guests[index];
+  if(!g) return;
+  g.name = document.getElementById('guestNameRow'+index).value.trim();
+  g.email = document.getElementById('guestEmailRow'+index).value.trim();
+  g.side = document.getElementById('guestSideRow'+index).value;
+  g.status = document.getElementById('guestStatusRow'+index).value;
+  g.plusOne = Number(document.getElementById('guestPlusOneRow'+index).value || 0);
+  g.meal = document.getElementById('guestMealRow'+index).value.trim();
+  saveData('Guest changes saved', true);
+  renderAll();
+}
+function toggleGuestSelection(index, checked){
+  if(!plannerData.guests[index]) return;
+  plannerData.guests[index].selectedForGroupEmail = checked;
+  saveData(checked ? 'Guest selected for group email' : 'Guest removed from group email list');
+}
+function composeGuestEmail(index){
+  const g = plannerData.guests[index];
+  if(!g || !g.email){ alert('Add the guest email address first, then click Save, then Email.'); return; }
+  const names = [plannerData.setup.partnerOne, plannerData.setup.partnerTwo].filter(Boolean).join(' & ') || 'the couple';
+  const eventDate = plannerData.setup.weddingDate || '[Wedding Date]';
+  const venueName = plannerData.setup.venueName || '[Venue Name]';
+  const subject = encodeURIComponent(`Wedding Invitation / RSVP - ${names}`);
+  const body = encodeURIComponent(`Hi ${g.name || 'there'},\n\nWe would love to celebrate our wedding with you.\n\nDate: ${eventDate}\nVenue: ${venueName}\n\nPlease let us know your RSVP status when you can.\n\nWarmly,\n${names}`);
+  window.location.href = `mailto:${g.email}?subject=${subject}&body=${body}`;
+}
+function composeBulkGuestEmail(){
+  const selected = plannerData.guests.filter(g => g.selectedForGroupEmail && (g.email||'').trim());
+  if(!selected.length){ alert('Select one or more guests with email addresses first.'); return; }
+  const emails = selected.map(g => g.email.trim()).join(',');
+  const names = [plannerData.setup.partnerOne, plannerData.setup.partnerTwo].filter(Boolean).join(' & ') || 'the couple';
+  const eventDate = plannerData.setup.weddingDate || '[Wedding Date]';
+  const venueName = plannerData.setup.venueName || '[Venue Name]';
+  const subject = encodeURIComponent(`Wedding Invitation / RSVP - ${names}`);
+  const body = encodeURIComponent(`Hello,\n\nWe would love to celebrate our wedding with you.\n\nDate: ${eventDate}\nVenue: ${venueName}\n\nPlease let us know your RSVP status when you can.\n\nWarmly,\n${names}`);
+  window.location.href = `mailto:${emails}?subject=${subject}&body=${body}`;
+}
+function selectAllGuestsForGroupEmail(){
+  plannerData.guests.forEach(g => g.selectedForGroupEmail = !!(g.email||'').trim());
+  saveData('Guests with email selected');
+  renderGuests();
+}
+function clearGroupEmailSelection(){
+  plannerData.guests.forEach(g => g.selectedForGroupEmail = false);
+  saveData('Group email selection cleared');
+  renderGuests();
+}
+
+function saveTaskRow(index){
+  const t = plannerData.checklist[index];
+  if(!t) return;
+  const name = document.getElementById('taskNameRow'+index).value.trim();
+  if(!name){ alert('Task name is required.'); return; }
+  t.name = name;
+  t.category = document.getElementById('taskCategoryRow'+index).value;
+  t.priority = document.getElementById('taskPriorityRow'+index).value;
+  t.dueDate = document.getElementById('taskDueDateRow'+index).value;
+  t.status = document.getElementById('taskStatusRow'+index).value;
+  saveData('Checklist task updated', true);
+  renderAll();
+}
+window.removeExpense = function(index){
+  plannerData.budget.expenses.splice(index,1);
+  saveData('Expense deleted');
+  renderAll();
+}
+window.removeGuest = function(index){
+  const guestName = plannerData.guests[index]?.name;
+  plannerData.guests.splice(index,1);
+  plannerData.seating = plannerData.seating.filter(a => a.guest !== guestName);
+  saveData('Guest deleted');
+  renderAll();
+}
+window.removeSeating = function(index){
+  plannerData.seating.splice(index,1);
+  saveData('Assignment deleted');
+  renderAll();
+}
+window.toggleTaskStatus = function(index){
+  const task = plannerData.checklist[index];
+  if(!task) return;
+  task.status = task.status === 'Done' ? 'Open' : 'Done';
+  saveData('Task updated');
+  renderAll();
+}
+window.removeTask = function(index){
+  plannerData.checklist.splice(index,1);
+  saveData('Task deleted');
+  renderAll();
+}
+window.removeVendor = function(index){
+  plannerData.vendors.splice(index,1);
+  saveData('Vendor deleted');
+  renderAll();
+}
+window.saveGuestRow = saveGuestRow;
+window.saveTaskRow = saveTaskRow;
+window.composeGuestEmail = composeGuestEmail;
+window.toggleGuestSelection = toggleGuestSelection;
+
+document.getElementById('setupForm').addEventListener('submit', e => {
+  e.preventDefault();
+  plannerData.setup.partnerOne = document.getElementById('partnerOne').value.trim();
+  plannerData.setup.partnerTwo = document.getElementById('partnerTwo').value.trim();
+  plannerData.setup.weddingDate = document.getElementById('weddingDate').value;
+  plannerData.setup.venueName = document.getElementById('venueName').value.trim();
+  plannerData.setup.totalBudget = Number(document.getElementById('totalBudget').value || 0);
+  plannerData.setup.currency = document.getElementById('currency').value;
+  plannerData.setup.guestTarget = Number(document.getElementById('guestTarget').value || 0);
+  plannerData.setup.venueCapacity = Number(document.getElementById('venueCapacity').value || 0);
+  plannerData.setup.tableCount = Number(document.getElementById('tableCount').value || 0);
+  plannerData.setup.seatsPerTable = Number(document.getElementById('seatsPerTable').value || 0);
+  saveData('Setup saved', true);
+  renderAll();
+  showView('dashboard');
+});
+document.getElementById('expenseForm').addEventListener('submit', e => {
+  e.preventDefault();
+  plannerData.budget.expenses.push({
+    title: document.getElementById('expenseTitle').value.trim(),
+    category: document.getElementById('expenseCategory').value,
+    amount: Number(document.getElementById('expenseAmount').value || 0),
+    paid: document.getElementById('expensePaid').value
+  });
+  e.target.reset();
+  document.getElementById('expenseAmount').value = 0;
+  document.getElementById('expensePaid').value = 'Paid';
+  saveData('Expense saved', true);
+  renderAll();
+});
+document.getElementById('guestForm').addEventListener('submit', e => {
+  e.preventDefault();
+  plannerData.guests.push({
+    name: document.getElementById('guestName').value.trim(),
+    email: document.getElementById('guestEmail').value.trim(),
+    side: document.getElementById('guestSide').value,
+    status: document.getElementById('guestStatus').value,
+    plusOne: Number(document.getElementById('guestPlusOne').value || 0),
+    meal: document.getElementById('guestMeal').value.trim(),
+    selectedForGroupEmail: false
+  });
+  e.target.reset();
+  document.getElementById('guestSide').value = 'Bride';
+  document.getElementById('guestStatus').value = 'Pending';
+  document.getElementById('guestPlusOne').value = '0';
+  saveData('Guest added', true);
+  renderAll();
+});
+document.getElementById('seatingGuest').addEventListener('change', syncSeatingSeatCount);
+document.getElementById('seatingForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const idx = Number(document.getElementById('seatingGuest').value);
+  const guest = plannerData.guests[idx];
+  const table = document.getElementById('seatingTable').value;
+  if(!guest || guest.status !== 'Confirmed'){ alert('Please select a confirmed guest.'); return; }
+  if(!table){ alert('Please select a table.'); return; }
+  const seatsUsed = 1 + Number(guest.plusOne || 0);
+  const existing = plannerData.seating.find(a => a.guest === guest.name);
+  if(existing){
+    existing.table = table;
+    existing.seatsUsed = seatsUsed;
+  }else{
+    plannerData.seating.push({guest: guest.name, table, seatsUsed});
+  }
+  saveData('Seating assignment saved', true);
+  renderAll();
+});
+document.getElementById('taskForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('taskName').value.trim();
+  if(!name){ alert('Task name is required.'); return; }
+  plannerData.checklist.push({
+    name,
+    category: document.getElementById('taskCategory').value,
+    priority: document.getElementById('taskPriority').value,
+    dueDate: document.getElementById('taskDueDate').value,
+    status: 'Open'
+  });
+  e.target.reset();
+  document.getElementById('taskCategory').value = 'Venue';
+  document.getElementById('taskPriority').value = 'Low';
+  saveData('Task saved', true);
+  renderAll();
+  showView('checklist');
+});
+document.getElementById('vendorForm').addEventListener('submit', e => {
+  e.preventDefault();
+  plannerData.vendors.push({
+    name: document.getElementById('vendorName').value.trim(),
+    category: document.getElementById('vendorCategory').value,
+    deposit: Number(document.getElementById('vendorDeposit').value || 0),
+    balance: Number(document.getElementById('vendorBalance').value || 0),
+    status: document.getElementById('vendorStatus').value,
+    dueDate: document.getElementById('vendorDueDate').value
+  });
+  e.target.reset();
+  document.getElementById('vendorDeposit').value = 0;
+  document.getElementById('vendorBalance').value = 0;
+  document.getElementById('vendorStatus').value = 'Booked';
+  saveData('Vendor saved', true);
+  renderAll();
+  showView('vendors');
+});
+document.getElementById('generateChecklistBtn').addEventListener('click', generateStarterChecklist);
+document.getElementById('saveNotesBtn').addEventListener('click', () => {
+  plannerData.notes = document.getElementById('notesField').value;
+  saveData('Notes saved', true);
+  renderAll();
+  showView('notes');
+});
+document.getElementById('exportExcelBtn').addEventListener('click', downloadPlannerExcel);
+document.getElementById('selectAllGuestsBtn').addEventListener('click', selectAllGuestsForGroupEmail);
+document.getElementById('clearSelectedGuestsBtn').addEventListener('click', clearGroupEmailSelection);
+document.getElementById('composeGroupEmailBtn').addEventListener('click', composeBulkGuestEmail);
+document.getElementById('quickSaveBtn').addEventListener('click', () => saveData('Planner saved', true));
+document.getElementById('goDashboardBtn').addEventListener('click', () => showView('dashboard'));
+document.getElementById('loadSavedPlannerBtn').addEventListener('click', () => {
+  loadData(); renderAll();
+  const hasSaved = !!(plannerData.setup.weddingDate || plannerData.guests.length || plannerData.budget.expenses.length || plannerData.checklist.length || plannerData.vendors.length || plannerData.notes);
+  showView(hasSaved ? 'dashboard' : 'setup');
+  openSavePopup(hasSaved ? 'Saved planner loaded' : 'No saved planner found yet');
+});
+document.getElementById('resetPlannerBtn').addEventListener('click', ()=>{ if(confirm('This will permanently clear all planner data saved locally in this browser. Continue?')) resetPlanner(); });
+document.getElementById('resetPlannerBtn2').addEventListener('click', ()=>{ if(confirm('This will permanently clear all planner data saved locally in this browser. Continue?')) resetPlanner(); });
+document.getElementById('resetPlannerBtn2').addEventListener('click', ()=>{ if(confirm('This will permanently clear all planner data saved locally in this browser. Continue?')) resetPlanner(); });
+document.getElementById('closeSavePopupBtn').addEventListener('click', closeSavePopup);
+document.getElementById('openMenuBtn').addEventListener('click', ()=>document.getElementById('sidebar').classList.toggle('open'));
+navButtons.forEach(btn => btn.addEventListener('click', ()=>showView(btn.dataset.view)));
+
+loadData();
+renderAll();
+const hasSavedContent = !!(plannerData.setup.weddingDate || plannerData.guests.length || plannerData.budget.expenses.length || plannerData.checklist.length || plannerData.vendors.length || plannerData.notes);
+showView(hasSavedContent ? 'dashboard' : 'setup');
+</script>
+</body>
+</html>
